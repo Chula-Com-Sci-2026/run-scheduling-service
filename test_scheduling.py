@@ -18,6 +18,8 @@ def test_membership_capacity_and_privacy(client,subject):
     assert client.get('/api/v1/runs').status_code==401
     public=client.get('/api/v1/runs/'+run,headers=auth(second)).json()
     assert 'participantIds' not in public
+    assert (public['latitude'],public['longitude'])==(13.73,100.54)
+    assert client.get('/api/v1/runs/'+run,headers=auth(subject)).json()['longitude']==100.541
     assert client.put(f'/api/v1/runs/{run}/participants/me',headers=auth(second)).status_code==200
     assert client.put(f'/api/v1/runs/{run}/participants/me',headers=auth(third)).status_code==409
     assert client.delete(f'/api/v1/runs/{run}/participants/me',headers=auth(subject)).status_code==409

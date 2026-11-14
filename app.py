@@ -39,7 +39,9 @@ def view(connection,row,subject):
       "title":row["title"],"area":row["meeting_point"],"meetingPoint":row["meeting_point"],
       "date":local.strftime("%Y-%m-%d"),"time":local.strftime("%H:%M"),"startsAt":row["starts_at"],"endsAt":row["ends_at"],
       "distanceKm":row["distance_km"],"pace":row["pace"],"participantLimit":row["participant_limit"],
-      "latitude":round(row["latitude"],1),"longitude":round(row["longitude"],1),"visibility":"Public","participants":len(participants),"joined":joined,"status":row["status"],"weather":row["weather"]}
+      # Before joining: the meeting point to about 1 km (0.01°), as Profile does for runner areas
+      # (NFR-4.1), so Who's nearby can find runs within 1 km without revealing the exact pin.
+      "latitude":round(row["latitude"],2),"longitude":round(row["longitude"],2),"visibility":"Public","participants":len(participants),"joined":joined,"status":row["status"],"weather":row["weather"]}
     # Exact pin is available only to joined participants.
     if joined:
         result.update(latitude=row["latitude"],longitude=row["longitude"],participantIds=[str(p["runner_id"]) for p in participants],
