@@ -109,6 +109,21 @@ def leave(run_id: UUID,claims=Depends(user)):
             raise HTTPException(409,"Run has already started")
         connection.execute("DELETE FROM participants WHERE run_id=%s AND runner_id=%s",(run_id,claims["sub"]))
 
+# The organizer can end a run early, e.g. a short demo run, so attendance opens without
+# waiting out the one-hour default. A run that has not started cannot be finished.
+@app.post("/api/v1/runs/{run_id}/finish")
+def finish(run_id: UUID,claims=Depends(user)):
+    with db() as connection:
+        row=find(connection,run_id)
+        if str(row["organizer_id"])!=claims["sub"]:
+            raise HTTPException(403,"Only the organizer can finish the run")
+        now=datetime.now(timezone.utc)
+        if row["starts_at"]>now:
+            raise HTTPException(409,"Run has not started")
+        if row["ends_at"]>now:
+            connection.execute("UPDATE runs SET ends_at=%s WHERE id=%s",(now,run_id))
+        return view(connection,find(connection,run_id),claims["sub"])
+
 @app.post("/api/v1/runs/{run_id}/attendance-confirmation")
 def confirm(run_id: UUID,claims=Depends(user)):
     with db() as connection:
